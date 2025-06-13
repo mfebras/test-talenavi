@@ -12,5 +12,6 @@ Route::name('v1.')
             ->controller(TodoController::class)
             ->group(function () {
                 Route::post('/', 'store')->name('store');
+                Route::get('export', 'export')->name('export');
             });
     });
