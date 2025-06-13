@@ -13,5 +13,6 @@ Route::name('v1.')
             ->group(function () {
                 Route::post('/', 'store')->name('store');
                 Route::get('export', 'export')->name('export');
+                Route::get('chart', 'chart')->name('chart');
             });
     });

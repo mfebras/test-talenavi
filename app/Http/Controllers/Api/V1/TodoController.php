@@ -5,14 +5,19 @@ namespace App\Http\Controllers\Api\V1;
 use App\Enums\TodoStatus;
 use App\Exports\TodoExport;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\TodoChartRequest;
 use App\Http\Requests\Api\V1\TodoExportRequest;
 use App\Http\Requests\Api\V1\TodoRequest;
 use App\Models\Todo;
-use Maatwebsite\Excel\Facades\Excel;
+use App\Repositories\TodoRepository;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class TodoController extends Controller
 {
+    public function __construct(protected TodoRepository $repository)
+    {}
+
     public function store(TodoRequest $request)
     {
         $todo = Todo::create([
@@ -68,5 +73,26 @@ class TodoController extends Controller
         $totalTimeTracked = $data->sum('time_tracked');
 
         return Excel::download(new TodoExport($data, $total, $totalTimeTracked), 'todos.xlsx');
+    }
+
+    public function chart(TodoChartRequest $request)
+    {
+        $data =[];
+
+        switch ($request->type) {
+            case 'priority':
+                $data['priority_summary'] = $this->repository->getPrioritySummary();
+                break;
+
+            case 'assignee':
+                $data['assignee_summary'] = $this->repository->getAssigneeSummary();
+                break;
+            
+            default:
+                $data['status_summary'] = $this->repository->getStatusSummary();
+                break;
+        }
+
+        return response()->json($data);
     }
 }
