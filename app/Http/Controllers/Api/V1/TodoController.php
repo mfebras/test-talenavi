@@ -36,43 +36,16 @@ class TodoController extends Controller
 
     public function export(TodoExportRequest $request)
     {
-        $todo = Todo::select([
-            'title',
-            'assignee',
-            'due_date',
-            'time_tracked',
-            'status',
-            'priority',
-        ]);
+        $export = $this->repository->export($request);
 
-        // Filter
-        if ($request->title) {
-            $todo->where('title', 'like', "%$request->title%");
-        }
-        if ($request->assignee) {
-            $assignees = explode(',', $request->assignee);
-            $todo->whereIn('assignee', $assignees);
-        }
-        if ($request->start && $request->end) {
-            $todo->whereBetween('due_date', [$request->start, $request->end]);
-        }
-        if (isset($request->min) && isset($request->max)) {
-            $todo->whereBetween('time_tracked', [$request->min, $request->max]);
-        }
-        if ($request->status) {
-            $statuses = explode(',', $request->status);
-            $todo->whereIn('status', $statuses);
-        }
-        if ($request->priority) {
-            $priorities = explode(',', $request->priority);
-            $todo->whereIn('priority', $priorities);
-        }
-
-        $data = $todo->get();
-        $total = $data->count();
-        $totalTimeTracked = $data->sum('time_tracked');
-
-        return Excel::download(new TodoExport($data, $total, $totalTimeTracked), 'todos.xlsx');
+        return Excel::download(
+            new TodoExport(
+                $export['data'],
+                $export['total'],
+                $export['total_time_tracked']
+            ),
+            'todos.xlsx'
+        );
     }
 
     public function chart(TodoChartRequest $request)

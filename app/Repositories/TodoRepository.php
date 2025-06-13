@@ -7,6 +7,48 @@ use App\Enums\TodoStatus;
 use App\Models\Todo;
 
 class TodoRepository {
+    function export($request) {
+        $todo = Todo::select([
+            'title',
+            'assignee',
+            'due_date',
+            'time_tracked',
+            'status',
+            'priority',
+        ]);
+
+        // Filter
+        if ($request->title) {
+            $todo->where('title', 'like', "%$request->title%");
+        }
+        if ($request->assignee) {
+            $assignees = explode(',', $request->assignee);
+            $todo->whereIn('assignee', $assignees);
+        }
+        if ($request->start && $request->end) {
+            $todo->whereBetween('due_date', [$request->start, $request->end]);
+        }
+        if (isset($request->min) && isset($request->max)) {
+            $todo->whereBetween('time_tracked', [$request->min, $request->max]);
+        }
+        if ($request->status) {
+            $statuses = explode(',', $request->status);
+            $todo->whereIn('status', $statuses);
+        }
+        if ($request->priority) {
+            $priorities = explode(',', $request->priority);
+            $todo->whereIn('priority', $priorities);
+        }
+
+        $data = $todo->get();
+
+        return [
+            'data'  => $data,
+            'total' => $data->count(),
+            'total_time_tracked' => $data->sum('time_tracked'),
+        ];
+    }
+
     public function getStatusSummary()
     {
         $data = [];
